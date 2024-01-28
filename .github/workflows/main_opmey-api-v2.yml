@@ -1,7 +1,4 @@
-# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
-# More GitHub Actions for Azure: https://github.com/Azure/actions
-
-name: Build and deploy Node.js app to Azure Web App - opmey-api-v2
+name: Build and deploy Nest.js app to Azure Web App - opmey-api-v2
 
 on:
   push:
@@ -19,21 +16,21 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v3
         with:
-          node-version: '20.x'
+          node-version: '18.x'
 
-      - name: npm install, build, and test
-        run: |
-          npm install
-          npm run build --if-present
-          npm run test --if-present
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build Nest.js app
+        run: npm run build
 
       - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+        run: zip release.zip -r dist/* package.json package-lock.json
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v3
         with:
-          name: node-app
+          name: nest-app
           path: release.zip
 
   deploy:
@@ -43,17 +40,17 @@ jobs:
       name: 'Production'
       url: ${{ steps.deploy-to-webapp.outputs.webapp-url }}
     permissions:
-      id-token: write #This is required for requesting the JWT
+      id-token: write # This is required for requesting the JWT
 
     steps:
       - name: Download artifact from build job
         uses: actions/download-artifact@v3
         with:
-          name: node-app
+          name: nest-app
 
       - name: Unzip artifact for deployment
-        run: unzip release.zip
-      
+        run: unzip release.zip -d ./deploy
+
       - name: Login to Azure
         uses: azure/login@v1
         with:
@@ -61,11 +58,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_D00F94FD30D3451BBDDD0832C84D6520 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_569826BEDDEE475DBCC8FD85C2B64E11 }}
 
-      - name: 'Deploy to Azure Web App'
+      - name: Deploy to Azure Web App
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v2
         with:
           app-name: 'opmey-api-v2'
           slot-name: 'Production'
-          package: .
-          
+          package: ./deploy
