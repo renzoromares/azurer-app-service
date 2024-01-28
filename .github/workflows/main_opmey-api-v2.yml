@@ -56,6 +56,10 @@ jobs:
       - name: Install Node.js dependencies
         run: npm install --production --prefix ./deploy
 
+      - name: Install Nest CLI in Azure App Service
+        run: npm install -g @nestjs/cli
+        working-directory: ./deploy
+
       - name: Login to Azure
         uses: azure/login@v1
         with:
